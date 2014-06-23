@@ -75,7 +75,7 @@ static inline void sxe_add_namespace_name(Array& ret, xmlNsPtr ns) {
 static void sxe_add_registered_namespaces(c_SimpleXMLElement* sxe,
                                           xmlNodePtr node, bool recursive,
                                           Array& return_value) {
-  if (node->type == XML_ELEMENT_NODE) {
+  if (node != nullptr && node->type == XML_ELEMENT_NODE) {
     xmlNsPtr ns = node->nsDef;
     while (ns != nullptr) {
       sxe_add_namespace_name(return_value, ns);
@@ -661,7 +661,7 @@ static inline String sxe_xmlNodeListGetString(xmlDocPtr doc, xmlNodePtr list,
     xmlFree(tmp);
     return ret;
   } else {
-    return String("");
+    return empty_string;
   }
 }
 
@@ -819,9 +819,10 @@ next_iter:
 static Variant sxe_object_cast(c_SimpleXMLElement* sxe, int8_t type) {
   if (type == HPHP::KindOfBoolean) {
     xmlNodePtr node = php_sxe_get_first_node(sxe, nullptr);
+    if (node) return true;
     Array properties = Array::Create();
     sxe_get_prop_hash(sxe, true, properties);
-    return node != nullptr || properties.size();
+    return properties.size() != 0;
   }
 
   xmlChar* contents = nullptr;
@@ -1654,7 +1655,7 @@ c_SimpleXMLElementIterator::c_SimpleXMLElementIterator(Class* cb) :
 
 c_SimpleXMLElementIterator::~c_SimpleXMLElementIterator() {
   if (sxe) {
-    sxe->decRefCount();
+    decRefObj(sxe);
     sxe = nullptr;
   }
 }
